@@ -8,7 +8,7 @@
 ### 环境要求
 
 - NVIDIA GPU，显存 ≥ 4 GB。RTX 30/40/50 系可直接跑；RTX 20 系 / T4 等老卡需加参数，见文末常见问题。
-- Linux 或 WSL2。不支持 Windows 原生和 macOS，没有 N 卡的见文末。
+- Linux 或 WSL2。不支持 Windows 原生。Apple Silicon Mac / AMD / 纯 CPU 见文末"非 NVIDIA 平台"。
 - 驱动已装好。验证：
 
 ```bash
@@ -181,6 +181,40 @@ python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --attention-backend
 
 **其他问题**：把完整命令和完整报错文本（不要截图）发到课程群，附上 `nvidia-smi` 输出和 SGLang 版本号。
 
-### 没有 NVIDIA 显卡
+### 非 NVIDIA 平台
+
+Qwen3-0.6B 在 [Cookbook](https://docs.sglang.io/cookbook/autoregressive/Qwen/Qwen3) 覆盖的硬件还有 AMD Instinct 和 Intel Xeon CPU；Apple Silicon 走 MLX 后端。启动和发请求与 N 卡基本相同，差异在安装。
+
+**Apple Silicon（M 系芯片 Mac，macOS 14+）**：源码安装。没有 uv 先 `brew install uv`。
+
+```bash
+git clone -b v0.5.18 https://github.com/sgl-project/sglang.git
+cd sglang
+uv venv -p 3.12 sglang-metal
+source sglang-metal/bin/activate
+uv pip install --upgrade pip
+rm -f python/pyproject.toml && mv python/pyproject_other.toml python/pyproject.toml
+SGLANG_BUILD_RUST_EXTS=none uv pip install -e "python[all_mps]"
+```
+
+启动：
+
+```bash
+SGLANG_USE_MLX=1 python -m sglang.launch_server --model Qwen/Qwen3-0.6B --disable-cuda-graph --host 0.0.0.0 --port 30000
+```
+
+之后发请求与前文完全相同。注意要用 v0.5.18 分支。内存 16 GB 以上即可，详见 [Apple Metal 官方文档](https://docs.sglang.io/docs/hardware-platforms/apple_metal)。
+
+**AMD GPU（仅数据中心的 Instinct MI300X / MI325X / MI355X，消费级 Radeon 不支持）**：用 [AMD 官方文档](https://docs.sglang.io/docs/hardware-platforms/amd_gpu)的 ROCm docker 镜像，容器内启动命令与 N 卡完全相同。
+
+**Intel Xeon CPU（没有 GPU 的服务器）**：安装见 [CPU 官方文档](https://docs.sglang.io/docs/hardware-platforms/cpu_server)，启动加两个参数：
+
+```bash
+python -m sglang.launch_server --model Qwen/Qwen3-0.6B --device cpu --disable-overlap-schedule
+```
+
+多路 NUMA 服务器再加 `--tp <NUMA 节点数>`，见 CPU 文档。
+
+### 没有以上任何硬件
 
 去 AutoDL 等平台按小时租一张入门级 GPU（跑 Qwen3-0.6B 最便宜的卡即可），租到的机器就是现成的 Linux，从"Python 环境"一节开始照做。课程如提供统一算力，会在课程群另行通知。
