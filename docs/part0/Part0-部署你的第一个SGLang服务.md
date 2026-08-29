@@ -8,7 +8,7 @@
 ### 环境要求
 
 - NVIDIA GPU，显存 ≥ 4 GB。RTX 30/40/50 系可直接跑；RTX 20 系 / T4 等老卡需加参数，见文末常见问题。
-- Linux 或 WSL2。不支持 Windows 原生。Apple Silicon Mac / AMD / 纯 CPU 见文末"非 NVIDIA 平台"。
+- Linux 或 WSL2。不支持 Windows 原生。Apple Silicon Mac / AMD / 纯 CPU 见"非 NVIDIA 平台"一节。
 - 驱动已装好。验证：
 
 ```bash
@@ -157,30 +157,6 @@ response = client.chat.completions.create(
 
 或者启动 server 时加 `--reasoning-parser qwen3`，思考内容会被分离到响应的 `reasoning_content` 字段。
 
-### 常见问题
-
-**OOM（out of memory）**：显存小或显卡同时在跑桌面。降低 SGLang 的显存占比并调短上下文：
-
-```bash
-python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --mem-fraction-static 0.6 --context-length 8192 --port 30000
-```
-
-**RTX 20 系 / T4 等老卡启动报错**：默认 attention backend 需要较新架构，换 triton：
-
-```bash
-python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --attention-backend triton --port 30000
-```
-
-**启动报 CUDA 相关错误（如 "CUDA driver version is insufficient" / "no kernel image is available"）**：驱动是 CUDA 12.x 但装了默认的 CUDA 13 依赖。回到"安装 SGLang"一节，补跑 CUDA 12 的三条 force-reinstall 命令。
-
-**下载卡住**：检查 `HF_ENDPOINT` / `SGLANG_USE_MODELSCOPE` 是否设置在启动 server 的那个终端里。
-
-**address already in use**：端口被占，换 `--port 30001`，请求命令里的端口同步改。
-
-**WSL2 里找不到 nvidia-smi**：去 NVIDIA 官网装 Windows 驱动，然后 PowerShell 里 `wsl --shutdown` 重启 WSL 再试。
-
-**其他问题**：把完整命令和完整报错文本（不要截图）发到课程群，附上 `nvidia-smi` 输出和 SGLang 版本号。
-
 ### 非 NVIDIA 平台
 
 **Apple Silicon（M 系芯片 Mac，macOS 14+，内存 ≥ 16 GB）**：
@@ -213,6 +189,30 @@ python -m sglang.launch_server --model Qwen/Qwen3-0.6B --device cpu --disable-ov
 ```
 
 多路 NUMA 服务器加 `--tp <NUMA 节点数>`。
+
+### 常见问题
+
+**OOM（out of memory）**：显存小或显卡同时在跑桌面。降低 SGLang 的显存占比并调短上下文：
+
+```bash
+python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --mem-fraction-static 0.6 --context-length 8192 --port 30000
+```
+
+**RTX 20 系 / T4 等老卡启动报错**：默认 attention backend 需要较新架构，换 triton：
+
+```bash
+python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --attention-backend triton --port 30000
+```
+
+**启动报 CUDA 相关错误（如 "CUDA driver version is insufficient" / "no kernel image is available"）**：驱动是 CUDA 12.x 但装了默认的 CUDA 13 依赖。回到"安装 SGLang"一节，补跑 CUDA 12 的三条 force-reinstall 命令。
+
+**下载卡住**：检查 `HF_ENDPOINT` / `SGLANG_USE_MODELSCOPE` 是否设置在启动 server 的那个终端里。
+
+**address already in use**：端口被占，换 `--port 30001`，请求命令里的端口同步改。
+
+**WSL2 里找不到 nvidia-smi**：去 NVIDIA 官网装 Windows 驱动，然后 PowerShell 里 `wsl --shutdown` 重启 WSL 再试。
+
+**其他问题**：把完整命令和完整报错文本（不要截图）发到课程群，附上 `nvidia-smi` 输出和 SGLang 版本号。
 
 ### 没有以上任何硬件
 
