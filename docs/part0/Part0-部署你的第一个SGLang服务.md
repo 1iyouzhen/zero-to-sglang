@@ -9,35 +9,35 @@
 
 - NVIDIA GPU，显存 ≥ 4 GB。RTX 30/40/50 系可直接跑；RTX 20 系 / T4 等老卡需加参数，见文末常见问题。
 - Linux 或 WSL2。不支持 Windows 原生。不支持 macOS，没有 N 卡的见文末。
-- 驱动已装好。验证：
+- NVIDIA 驱动已安装。验证命令：
 
 ```bash
 nvidia-smi
 ```
 
-能显示显卡信息且右上角 CUDA Version ≥ 12.x 即可，**记下这个数字，安装 SGLang 时要按它选命令**。不需要自己安装 CUDA Toolkit，SGLang 的依赖自带 CUDA 运行时。WSL2 用户驱动装在 Windows 侧，WSL2 内不要装。
+能显示显卡信息且右上角 CUDA Version ≥ 12.x 即为正常。这个版本号决定后文安装 SGLang 时选哪组命令。CUDA Toolkit 无需单独安装，SGLang 的依赖自带 CUDA 运行时。WSL2 环境下驱动安装在 Windows 侧，WSL2 内无需再装。
 
 ### Python 环境
 
-要求 Python ≥ 3.10。新建一个独立环境：
+要求 Python ≥ 3.10，建议在独立环境中安装：
 
 ```bash
 conda create -n sglang python=3.12 -y
 conda activate sglang
 ```
 
-没有 conda 用 venv 也一样：
+没有 conda 时用 venv 效果相同：
 
 ```bash
 python3 -m venv ~/sglang-env
 source ~/sglang-env/bin/activate
 ```
 
-后续所有命令都在此环境中执行。新开终端记得重新 activate。
+后续所有命令都在此环境中执行；新开的终端需要重新 activate。
 
 ### 安装 SGLang
 
-SGLang 默认按 CUDA 13 构建。按 `nvidia-smi` 右上角的 CUDA Version 选命令。
+SGLang 默认按 CUDA 13 构建，安装命令按 `nvidia-smi` 右上角的 CUDA Version 区分。
 
 **CUDA Version ≥ 13.0**：
 
@@ -85,7 +85,7 @@ uv pip install modelscope
 export SGLANG_USE_MODELSCOPE=true
 ```
 
-注意 `export` 只对当前终端生效。启动 server 的终端必须设置过，否则等于没设。想永久生效：
+`export` 只对当前终端生效，启动 server 的终端必须设置过，否则不起作用。永久生效的写法：
 
 ```bash
 echo 'export HF_ENDPOINT=https://hf-mirror.com' >> ~/.bashrc
@@ -103,7 +103,7 @@ python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --host 0.0.0.0 --po
 The server is fired up and ready to roll!
 ```
 
-此终端不要关，关了服务就停了。后续操作在新终端进行。
+这个终端关闭后服务即停止，需保持运行；后续操作在新终端进行。
 
 Qwen3 全系列在各种硬件上的部署参数见 [SGLang Cookbook](https://docs.sglang.io/cookbook/autoregressive/Qwen/Qwen3)，本课用默认参数即可。
 
@@ -129,7 +129,7 @@ curl -s http://localhost:30000/v1/chat/completions \
 
 返回的 JSON 里有模型回答即成功。
 
-SGLang 的接口与 OpenAI API 兼容，用 Python 调用先装 openai 库（`uv pip install openai`）：
+SGLang 的接口与 OpenAI API 兼容，Python 调用需要 openai 库（`uv pip install openai`）：
 
 ```python
 import openai
@@ -144,7 +144,7 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
-Qwen3 默认会先输出一段 `<think>...</think>` 思考过程，不是 bug。不想要的话在请求里关掉：
+Qwen3 默认会先输出一段 `<think>...</think>` 思考过程，不是 bug。不需要思考过程时，可在请求里关闭：
 
 ```python
 response = client.chat.completions.create(
@@ -171,18 +171,18 @@ python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --mem-fraction-stat
 python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --attention-backend triton --port 30000
 ```
 
-**启动报 CUDA 相关错误（如 "CUDA driver version is insufficient" / "no kernel image is available"）**：驱动是 CUDA 12.x 但装了默认的 CUDA 13 依赖。回到"安装 SGLang"一节，补跑 CUDA 12 的三条 force-reinstall 命令。
+**启动报 CUDA 相关错误（如 "CUDA driver version is insufficient" / "no kernel image is available"）**：驱动是 CUDA 12.x 但装了默认的 CUDA 13 依赖。解决办法是补跑"安装 SGLang"一节 CUDA 12 的三条 force-reinstall 命令。
 
-**下载卡住**：检查 `HF_ENDPOINT` / `SGLANG_USE_MODELSCOPE` 是否设置在启动 server 的那个终端里。
+**下载卡住**：常见原因是 `HF_ENDPOINT` / `SGLANG_USE_MODELSCOPE` 没有设置在启动 server 的那个终端里。
 
-**address already in use**：端口被占，换 `--port 30001`，请求命令里的端口同步改。
+**address already in use**：端口被占用。换用其他端口（如 `--port 30001`）即可，请求命令里的端口同步修改。
 
-**WSL2 里找不到 nvidia-smi**：去 NVIDIA 官网装 Windows 驱动，然后 PowerShell 里 `wsl --shutdown` 重启 WSL 再试。
+**WSL2 里找不到 nvidia-smi**：驱动需要装在 Windows 侧（NVIDIA 官网下载），装好后在 PowerShell 执行 `wsl --shutdown` 重启 WSL 即可。
 
-**其他问题**：把完整命令和完整报错文本（不要截图）发到课程群，附上 `nvidia-smi` 输出和 SGLang 版本号。
+**其他问题**：可以把完整命令和完整报错（文本形式，非截图）发到课程群提问，附上 `nvidia-smi` 输出和 SGLang 版本号能大幅加快定位。
 
 ### 没有 NVIDIA 显卡
 
 课程实验以 NVIDIA 环境为准。SGLang 也支持 [AMD Instinct](https://docs.sglang.io/docs/hardware-platforms/amd_gpu)、[Intel Xeon CPU](https://docs.sglang.io/docs/hardware-platforms/cpu_server)、[Apple Silicon（实验性）](https://docs.sglang.io/docs/hardware-platforms/apple_metal)等平台，但后续课程不保证适用，不建议用于本课程。
 
-Mac 和无 N 卡的同学，去 AutoDL 等平台按小时租一张入门级 GPU（跑 Qwen3-0.6B 最便宜的卡即可），租到的机器就是现成的 Linux，从"Python 环境"一节开始照做。课程如提供统一算力，会在课程群另行通知。
+Mac 和无 N 卡的同学可以在 AutoDL 等平台按小时租一张入门级 GPU（跑 Qwen3-0.6B 最便宜的卡即可），租到的机器就是现成的 Linux 环境，从"Python 环境"一节开始操作即可。课程如提供统一算力，会在课程群另行通知。
