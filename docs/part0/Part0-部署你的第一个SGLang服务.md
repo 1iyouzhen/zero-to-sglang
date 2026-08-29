@@ -47,7 +47,7 @@ pip install uv
 uv pip install --prerelease=allow sglang
 ```
 
-**CUDA Version 12.x**（消费级显卡上常见，比如驱动没升级的 RTX 4090 显示 12.8）：默认安装的依赖在 12.x 驱动上跑不起来，装完后需要强制替换成 CUDA 12 版本的 torch 和 kernel：
+**CUDA Version 12.x**：
 
 ```bash
 pip install --upgrade pip
@@ -58,7 +58,7 @@ uv pip install --force-reinstall sglang-kernel --index-url https://docs.sglang.a
 uv pip install --force-reinstall sgl-deep-gemm --index-url https://docs.sglang.ai/whl/cu129/ --no-deps
 ```
 
-另一个办法是把显卡驱动升级到支持 CUDA 13 的版本（≥ 580，RTX 30/40/50 系都支持），然后走上面 CUDA 13 的命令。租用的云主机通常无法自己升驱动，用 CUDA 12 命令即可。
+后三条把 torch 和 kernel 换成 CUDA 12 构建。也可以把驱动升级到 ≥ 580 后直接走 CUDA 13 命令。
 
 验证：
 
