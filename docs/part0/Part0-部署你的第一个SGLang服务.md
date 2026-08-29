@@ -183,11 +183,10 @@ python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --attention-backend
 
 ### 非 NVIDIA 平台
 
-Qwen3-0.6B 在 [Cookbook](https://docs.sglang.io/cookbook/autoregressive/Qwen/Qwen3) 覆盖的硬件还有 AMD Instinct 和 Intel Xeon CPU；Apple Silicon 走 MLX 后端。启动和发请求与 N 卡基本相同，差异在安装。
-
-**Apple Silicon（M 系芯片 Mac，macOS 14+）**：源码安装。没有 uv 先 `brew install uv`。
+**Apple Silicon（M 系芯片 Mac，macOS 14+，内存 ≥ 16 GB）**：
 
 ```bash
+brew install uv
 git clone -b v0.5.18 https://github.com/sgl-project/sglang.git
 cd sglang
 uv venv -p 3.12 sglang-metal
@@ -203,17 +202,17 @@ SGLANG_BUILD_RUST_EXTS=none uv pip install -e "python[all_mps]"
 SGLANG_USE_MLX=1 python -m sglang.launch_server --model Qwen/Qwen3-0.6B --disable-cuda-graph --host 0.0.0.0 --port 30000
 ```
 
-之后发请求与前文完全相同。注意要用 v0.5.18 分支。内存 16 GB 以上即可，详见 [Apple Metal 官方文档](https://docs.sglang.io/docs/hardware-platforms/apple_metal)。
+发请求与前文相同。详见 [Apple Metal 官方文档](https://docs.sglang.io/docs/hardware-platforms/apple_metal)。
 
-**AMD GPU（仅数据中心的 Instinct MI300X / MI325X / MI355X，消费级 Radeon 不支持）**：用 [AMD 官方文档](https://docs.sglang.io/docs/hardware-platforms/amd_gpu)的 ROCm docker 镜像，容器内启动命令与 N 卡完全相同。
+**AMD GPU（仅 Instinct MI300X / MI325X / MI355X，消费级 Radeon 不支持）**：按 [AMD 官方文档](https://docs.sglang.io/docs/hardware-platforms/amd_gpu)用 ROCm docker 镜像安装，容器内启动命令与 N 卡相同。
 
-**Intel Xeon CPU（没有 GPU 的服务器）**：安装见 [CPU 官方文档](https://docs.sglang.io/docs/hardware-platforms/cpu_server)，启动加两个参数：
+**Intel Xeon CPU**：安装见 [CPU 官方文档](https://docs.sglang.io/docs/hardware-platforms/cpu_server)，启动：
 
 ```bash
 python -m sglang.launch_server --model Qwen/Qwen3-0.6B --device cpu --disable-overlap-schedule
 ```
 
-多路 NUMA 服务器再加 `--tp <NUMA 节点数>`，见 CPU 文档。
+多路 NUMA 服务器加 `--tp <NUMA 节点数>`。
 
 ### 没有以上任何硬件
 
