@@ -15,7 +15,7 @@
 nvidia-smi
 ```
 
-能显示显卡信息且右上角 CUDA Version ≥ 12.x 即可。不需要自己安装 CUDA Toolkit，SGLang 的依赖自带 CUDA 运行时。WSL2 用户驱动装在 Windows 侧，WSL2 内不要装。
+能显示显卡信息且右上角 CUDA Version ≥ 12.x 即可，**记下这个数字，安装 SGLang 时要按它选命令**。不需要自己安装 CUDA Toolkit，SGLang 的依赖自带 CUDA 运行时。WSL2 用户驱动装在 Windows 侧，WSL2 内不要装。
 
 ### Python 环境
 
@@ -37,11 +37,28 @@ source ~/sglang-env/bin/activate
 
 ### 安装 SGLang
 
+SGLang 默认按 CUDA 13 构建。按 `nvidia-smi` 右上角的 CUDA Version 选命令。
+
+**CUDA Version ≥ 13.0**：
+
 ```bash
 pip install --upgrade pip
 pip install uv
 uv pip install --prerelease=allow sglang
 ```
+
+**CUDA Version 12.x**（消费级显卡上常见，比如驱动没升级的 RTX 4090 显示 12.8）：默认安装的依赖在 12.x 驱动上跑不起来，装完后需要强制替换成 CUDA 12 版本的 torch 和 kernel：
+
+```bash
+pip install --upgrade pip
+pip install uv
+uv pip install --prerelease=allow sglang
+uv pip install --force-reinstall torch==2.13.0 torchaudio==2.11.0 torchvision --index-url https://download.pytorch.org/whl/cu129
+uv pip install --force-reinstall sglang-kernel --index-url https://docs.sglang.ai/whl/cu129/
+uv pip install --force-reinstall sgl-deep-gemm --index-url https://docs.sglang.ai/whl/cu129/ --no-deps
+```
+
+另一个办法是把显卡驱动升级到支持 CUDA 13 的版本（≥ 580，RTX 30/40/50 系都支持），然后走上面 CUDA 13 的命令。租用的云主机通常无法自己升驱动，用 CUDA 12 命令即可。
 
 验证：
 
@@ -153,6 +170,8 @@ python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --mem-fraction-stat
 ```bash
 python3 -m sglang.launch_server --model-path Qwen/Qwen3-0.6B --attention-backend triton --port 30000
 ```
+
+**启动报 CUDA 相关错误（如 "CUDA driver version is insufficient" / "no kernel image is available"）**：驱动是 CUDA 12.x 但装了默认的 CUDA 13 依赖。回到"安装 SGLang"一节，补跑 CUDA 12 的三条 force-reinstall 命令。
 
 **下载卡住**：检查 `HF_ENDPOINT` / `SGLANG_USE_MODELSCOPE` 是否设置在启动 server 的那个终端里。
 
