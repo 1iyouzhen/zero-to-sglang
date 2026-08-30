@@ -1,6 +1,6 @@
 <!-- TODO: 替换为项目 banner 图，路径建议 docs/public/zero-to-sglang.png -->
 <div align='center'>
-    <img src="./docs/images/zero_to_sglang.jpg" alt="zero-to-sglang banner" width="100%">
+    <img src="./docs/images/zero_to_sglang.png" alt="zero-to-sglang banner" width="100%">
     <h1>zero-to-sglang</h1>
     <h3>📚 《从零手搓SGLang》</h3>
 </div>
