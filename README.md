@@ -187,7 +187,7 @@ zero-to-sglang/
 
 ### 特别感谢
 
-- 感谢 SGLang 团队和 RadixArk 对项目的支持与官方章节的编写
+- 感谢 Datawhle 和 SGLang 团队对项目的支持与官方章节的编写
 - 感谢 [@Sm1les](https://github.com/Sm1les) 对本项目的帮助与支持
 - 感谢所有为本项目做出贡献的开发者们 ❤️
 
