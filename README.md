@@ -61,7 +61,6 @@
 |------|----------|------|
 | <strong>Part 0 — 开课之前</strong> | | |
 | [0.1 编码伦理与开源精神](docs/part0/Part0-编码伦理与开源精神.md) | 对自己代码负责、沟通时说人话、Profile 永远是第一步、开源精神 | ✅ |
-| <strong>Part 0 — 开课之前</strong> | | |
 | [0.2 部署你的第一个SGLang服务](docs/part0/Part0-部署你的第一个SGLang服务.md) | 在你自己的 GPU 上用 SGLang 跑起 Qwen3-0.6B | ✅ |
 | <strong>Part I — 基础概念（concepts only，无代码、无 GPU）</strong> | | |
 | 1. Introduction to LLM | LLM 的定义与发展脉络、Transformer 架构、自回归生成、关键基础概念 | 🔄 |
