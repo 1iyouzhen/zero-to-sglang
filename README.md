@@ -1,4 +1,4 @@
-<!-- TODO: 替换为项目 banner 图，路径建议 docs/public/zero-to-sglang.png -->
+
 <div align='center'>
     <img src="./docs/images/zero_to_sglang.png" alt="zero-to-sglang banner" width="100%">
     <h1>zero-to-sglang</h1>
@@ -64,7 +64,7 @@
 | [0.2 部署你的第一个SGLang服务](docs/part0/Part0-部署你的第一个SGLang服务.md) | 环境设置，在你自己的 GPU 上用 SGLang 跑起 Qwen3-0.6B | ✅ |
 | <strong>Part I — 基础概念（concepts only，无代码、无 GPU）</strong> | | |
 | 1. Introduction to LLM | LLM 的定义与发展脉络、Transformer 架构、自回归生成、关键基础概念 | 🔄 |
-| 2. Introduction to inference | 训练 vs 推理、prefill/decode、compute-bound vs memory-bound、Roofline | 🔄 |
+| [2. Introduction to inference](docs/part1/第2章_推理入门.md) | 训练 vs 推理、prefill/decode、compute-bound vs memory-bound、Roofline model| ✅ |
 | 3. Introduction to GPU | GPU 架构基础、LLM 推理在 GPU 上的执行流程、从硬件理解推理瓶颈 | 🔄 |
 | 4. KV Cache: The Core Data Structure of Inference | 从 Attention 推导 KV Cache、cache 生命周期、显存占用定量分析 | 🔄 |
 | [5. Introduction to Benchmark](docs/part1/第5章_Benchmark入门.md) | TTFT / TPOT / ITL / Goodput 等核心指标、百分位与尾延迟、怎么设计/跑/读 benchmark | ✅ |
