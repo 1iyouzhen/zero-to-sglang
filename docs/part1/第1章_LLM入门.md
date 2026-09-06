@@ -1,4 +1,4 @@
-# 第一章 Introduction to LLM
+# 第 1 章 Introduction to LLM
 
 ## 本章学习目标
 
