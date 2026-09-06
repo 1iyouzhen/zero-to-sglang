@@ -63,10 +63,10 @@
 | [0.1 编码伦理与开源精神](docs/part0/Part0-编码伦理与开源精神.md) | 对自己代码负责、沟通时说人话、Profile 永远是第一步、开源精神 | ✅ |
 | [0.2 部署你的第一个SGLang服务](docs/part0/Part0-部署你的第一个SGLang服务.md) | 环境设置，在你自己的 GPU 上用 SGLang 跑起 Qwen3-0.6B | ✅ |
 | <strong>Part I — 基础概念（concepts only，无代码、无 GPU）</strong> | | |
-| 1. Introduction to LLM | LLM 的定义与发展脉络、Transformer 架构、自回归生成、关键基础概念 | 🔄 |
+| [1. Introduction to LLM](docs/part1/第1章_LLM入门.md) | LLM 的定义与发展脉络、Transformer 架构、自回归生成、关键基础概念 | ✅ |
 | [2. Introduction to inference](docs/part1/第2章_推理入门.md) | 训练 vs 推理、prefill/decode、compute-bound vs memory-bound、Roofline model| ✅ |
 | 3. Introduction to GPU | GPU 架构基础、LLM 推理在 GPU 上的执行流程、从硬件理解推理瓶颈 | 🔄 |
-| 4. KV Cache: The Core Data Structure of Inference | 从 Attention 推导 KV Cache、cache 生命周期、显存占用定量分析 | 🔄 |
+| [4. KV Cache: The Core Data Structure of Inference](docs/part1/第4章_推理的核心数据结构入门.md) | 从 Attention 推导 KV Cache、cache 生命周期、显存占用定量分析 | ✅ |
 | [5. Introduction to Benchmark](docs/part1/第5章_Benchmark入门.md) | TTFT / TPOT / ITL / Goodput 等核心指标、百分位与尾延迟、怎么设计/跑/读 benchmark | ✅ |
 | <strong>Part II — 从零手搓 Mini SGL</strong> | | |
 | 1. mini-sglang：推理引擎长什么样 | 推理引擎的总体架构、模块划分、本部分的 roadmap | 🚧 |
