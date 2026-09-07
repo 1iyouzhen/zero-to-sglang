@@ -180,6 +180,16 @@ zero-to-sglang/
 
 <!-- TODO: 可继续补充读者常见问题 -->
 
+欢迎加入 zero-to-sglang 读者交流群，与大家一起交流学习、答疑解惑：
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="./docs/images/zero-to-sglang读者交流群.jpg" alt="读者交流群二维码" width="280"><br>读者交流群</td
+    </tr>
+  </table>
+</div>
+
 ## 👥 贡献者
 
 <!-- TODO: 补充贡献者名单（可参考 diy-llm / hello-agents 的表格形式） -->
