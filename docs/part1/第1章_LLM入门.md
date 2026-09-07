@@ -59,7 +59,7 @@ LLM自回归生成特性导致内存需求随输入序列长度和批次大小�
 transformer模型的起源可以追溯到2017年，当时由Google研究团队在论文[《Attention Is All You Need》](https://arxiv.org/abs/1706.03762)中首次提出。该模型的核心创新是引入了**自注意力机制**（Self-Attention Mechanism），摒弃了传统的循环神经网络（RNN）和卷积神经网络（CNN）结构。自注意力机制允许模型在处理序列数据时并行计算，从而大幅提高了计算效率，并解决了长距离依赖问题。
 
 <div align="center">
-    <img src="images/1-1-transformer.png" alt="1-1-transformer.png" width="800">
+    <img src="./images/1-1-transformer.png" alt="1-1-transformer.png" width="800">
 <p><em>图 1. Transformer 的整体架构</em></p>
 </div>
 
@@ -107,7 +107,7 @@ $$
 ### 3.1.2多头注意力机制（Multi-Head Attention）
 
 <div align="center">
-    <img src="images/1-2-MultiHeadAttention.png" alt="1-2-MultiHeadAttention.png" width="800">
+    <img src="./images/1-2-MultiHeadAttention.png" alt="1-2-MultiHeadAttention.png" width="800">
 <p><em>图 2. 多头注意力机制</em></p>
 </div>
 
@@ -238,7 +238,7 @@ $$
 残差 在深度学习中特指**残差连接**（Residual Connection），也称为**跳跃连接**（Skip Connection），是连接神经网络层与层之间的"捷径"，让信息可以直接绕过某些层传递。
 
 <div align="center">
-    <img src="images/1-3-Add&Norm.png" alt="1-3-Add&Norm.png" width="400">
+    <img src="./images/1-3-Add&Norm.png" alt="1-3-Add&Norm.png" width="400">
 <p><em>图 3. 残差连接与层归一化（Add & Norm）</em></p>
 </div>
 
@@ -268,7 +268,7 @@ $$\text{output} = \text{LayerNorm}\big(x + \text{Sublayer}(x)\big)$$
 ### 3.1.4 前馈网络(Feed Forward)与激活函数
 
 <div align="center">
-    <img src="images/1-4-FeedForward.png" alt="1-4-FeedForward.png" width="400">
+    <img src="./images/1-4-FeedForward.png" alt="1-4-FeedForward.png" width="400">
 <p><em>图 4. 前馈网络（Feed Forward）</em></p>
 </div>
 
