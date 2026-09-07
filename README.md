@@ -178,7 +178,7 @@ zero-to-sglang/
 不需要。这门课从推理的概念出发，Part III 才会深入 Attention Backends 等底层内容，到时候再按需补就行。
 </details>
 
-<!-- TODO: 可继续补充读者常见问题 -->
+
 
 ## 💬 读者交流群
 
@@ -194,7 +194,6 @@ zero-to-sglang/
 
 ## 👥 贡献者
 
-<!-- TODO: 补充贡献者名单（可参考 diy-llm / hello-agents 的表格形式） -->
 
 *注：我们感谢每一位为项目做出贡献的开发者！*
 
