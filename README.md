@@ -3,6 +3,7 @@
     <img src="./docs/images/zero_to_sglang.png" alt="zero-to-sglang banner" width="100%">
     <h1>zero-to-sglang</h1>
     <h3>📚 《从零手搓SGLang》</h3>
+    <p><em>A hands-on Chinese tutorial on LLM inference: build a mini-sglang from scratch, then read the real SGLang source.</em></p>
 </div>
 
 <div align="center">
@@ -59,8 +60,8 @@
 | 章节 | 关键内容 | 状态 |
 |------|----------|------|
 | <strong>Part 0 — 开课之前</strong> | | |
-| [0.1 编码伦理与开源精神](docs/part0/Part0-编码伦理与开源精神.md) | 对自己代码负责、沟通时说人话、Profile 永远是第一步、开源精神 | ✅ |
-| [0.2 部署你的第一个SGLang服务](docs/part0/Part0-部署你的第一个SGLang服务.md) | 环境设置，在你自己的 GPU 上用 SGLang 跑起 Qwen3-0.6B | ✅ |
+| [0.1 Coding Ethics and Open-Source Spirit（编码伦理与开源精神）](docs/part0/Part0-编码伦理与开源精神.md) | 对自己代码负责、沟通时说人话、Profile 永远是第一步、开源精神 | ✅ |
+| [0.2 Deploy Your First SGLang Server（部署你的第一个 SGLang 服务）](docs/part0/Part0-部署你的第一个SGLang服务.md) | 环境设置，在你自己的 GPU 上用 SGLang 跑起 Qwen3-0.6B | ✅ |
 | <strong>Part I — 基础概念（concepts only，无代码、无 GPU）</strong> | | |
 | [1. Introduction to LLM](docs/part1/第1章_LLM入门.md) | LLM 的定义与发展脉络、Transformer 架构、自回归生成、关键基础概念 | ✅ |
 | [2. Introduction to inference](docs/part1/第2章_推理入门.md) | 训练 vs 推理、prefill/decode、compute-bound vs memory-bound、Roofline model| ✅ |
@@ -135,24 +136,6 @@ zero-to-sglang/
 
 <!-- TODO: 若后续有配套代码目录，请补充到上面的结构树中 -->
 
-## 💡 如何学习
-
-&emsp;&emsp;这门课理论和实战对半分，适合有 Python 基础、对 LLM 有个大致概念的人。不需要你懂 CUDA，也不用一上来就有 GPU。
-
-&emsp;&emsp;五个部分按顺序走就行：
-
-- <strong>Part 0：开课之前</strong>。先聊点技术之外的：怎么对自己写的代码负责、怎么和 reviewer 沟通、为什么改性能之前必须先 profile。这部分很短，但值得先看。
-
-- <strong>Part I：基础概念</strong>（第 1 ~ 5 章）。没有代码，也不需要 GPU。把 LLM、推理、GPU、KV Cache、benchmark 这几个概念掰开讲清楚，建立心智模型。
-
-- <strong>Part II：从零手搓 Mini SGL</strong>（第 1 ~ 10 章）。动手。从 200 行前向和生成开始，一步步把你的 mini-sglang 搭起来。
-
-- <strong>Part III：高级推理技术</strong>（第 1 ~ 5 章）。读真实 SGLang 源码，讲 Attention Backends、CUDA Graph、量化这些进阶内容。
-
-- <strong>Part IV：如何为 SGLang 做贡献</strong>（第 1 ~ 3 章）。把前面学到的东西变成一次真实的贡献。
-
-&emsp;&emsp;推理优化是个靠动手的活，光看不练等于没学。代码一定要自己跑、自己改。遇到问题，直接来 issue 区问。
-
 ## 🤝 如何贡献
 
 我们是一个开放的开源社区，欢迎任何形式的贡献。动手之前，请先读一遍 [Part 0](docs/part0/Part0-编码伦理与开源精神.md)，了解我们期望的编码伦理与开源精神。
@@ -193,7 +176,7 @@ zero-to-sglang/
 
 ## 💬 读者交流群
 
-欢迎加入 Diy-LLM 读者交流群，与大家一起交流学习、答疑解惑：
+欢迎加入 zero-to-sglang 读者交流群，与大家一起交流学习、答疑解惑：
 
 <div align="center">
   <table>
@@ -213,7 +196,9 @@ zero-to-sglang/
 
 ### 特别感谢
 
-- 感谢 Datawhle 和 SGLang 团队对项目的支持
+- 感谢 Datawhale 和 SGLang 团队对项目的支持
+  - Datawhale：[@1iyouzhen](https://github.com/1iyouzhen)、[@xuhu0115](https://github.com/xuhu0115)、[@kangkang-Adam](https://github.com/kangkang-Adam)
+  - SGLang：[@Ccyest](https://github.com/Ccyest)
 - 感谢 [@Sm1les](https://github.com/Sm1les) 对本项目的帮助与支持
 - 感谢所有为本项目做出贡献的开发者们 ❤️
 
