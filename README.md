@@ -180,6 +180,8 @@ zero-to-sglang/
 
 <!-- TODO: 可继续补充读者常见问题 -->
 
+## 💬 读者交流群
+
 欢迎加入 zero-to-sglang 读者交流群，与大家一起交流学习、答疑解惑：
 
 <div align="center">
