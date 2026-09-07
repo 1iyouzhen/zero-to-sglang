@@ -10,7 +10,6 @@
   <img src="https://img.shields.io/github/forks/datawhalechina/zero-to-sglang?style=flat&logo=github" alt="GitHub forks"/>
   <img src="https://img.shields.io/badge/language-Chinese-brightgreen?style=flat" alt="Language"/>
   <a href="https://github.com/datawhalechina/zero-to-sglang"><img src="https://img.shields.io/badge/GitHub-Project-blue?style=flat&logo=github" alt="GitHub Project"></a>
-  <!-- TODO: 部署在线阅读后启用下面这行，并确认地址 -->
   <a href="https://datawhalechina.github.io/zero-to-sglang/"><img src="https://img.shields.io/badge/在线阅读-Online%20Reading-green?style=flat&logo=gitbook" alt="Online Reading"></a>
 </div>
 
@@ -67,9 +66,9 @@
 | [2. Introduction to inference](docs/part1/第2章_推理入门.md) | 训练 vs 推理、prefill/decode、compute-bound vs memory-bound、Roofline model| ✅ |
 | 3. Introduction to GPU | GPU 架构基础、LLM 推理在 GPU 上的执行流程、从硬件理解推理瓶颈 | 🔄 |
 | [4. KV Cache: The Core Data Structure of Inference](docs/part1/第4章_推理的核心数据结构入门.md) | 从 Attention 推导 KV Cache、cache 生命周期、显存占用定量分析 | ✅ |
-| [5. Introduction to Benchmark](docs/part1/第5章_Benchmark入门.md) | TTFT / TPOT / ITL / Goodput 等核心指标、百分位与尾延迟、怎么设计/跑/读 benchmark | ✅ |
+| [5. Introduction to Benchmark](docs/part1/第5章_Benchmark入门.md) | TTFT / TPOT / ITL / Goodput 等核心指标、百分位与尾延迟、怎么设计/跑/读 benchmark | 🔄 |
 | <strong>Part II — 从零手搓 Mini SGL</strong> | | |
-| 1. mini-sglang：推理引擎长什么样 | 推理引擎的总体架构、模块划分、本部分的 roadmap | 🚧 |
+| 1. mini-sglang：推理引擎长什么样 | 推理引擎的总体架构、模块划分、本部分的 roadmap | 📝 |
 | 2. **Inside SGLang: The Path of a Request** | 一个请求从进入到返回的完整生命周期 | 🚧 |
 | 3. Your First 200 Lines: Forward Pass and Generation | 手写前向传播与自回归生成循环 | 🚧 |
 | 4. KV Cache: From O(n²) to O(n) | 缓存实现与注意力计算优化 | 🚧 |
@@ -178,22 +177,11 @@ zero-to-sglang/
 不需要。这门课从推理的概念出发，Part III 才会深入 Attention Backends 等底层内容，到时候再按需补就行。
 </details>
 
-
-
-## 💬 读者交流群
-
-欢迎加入 zero-to-sglang 读者交流群，与大家一起交流学习、答疑解惑：
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><img src="./docs/images/zero-to-sglang读者交流群.jpg" alt="读者交流群二维码" width="280"><br>读者交流群</td
-    </tr>
-  </table>
-</div>
+<!-- TODO: 可继续补充读者常见问题 -->
 
 ## 👥 贡献者
 
+<!-- TODO: 补充贡献者名单（可参考 diy-llm / hello-agents 的表格形式） -->
 
 *注：我们感谢每一位为项目做出贡献的开发者！*
 
