@@ -74,7 +74,7 @@ PE_{(pos,2i+1)} &= \cos\left(\frac{pos}{10000^{2i/d_{\text{model}}}}\right)
 \end{align*}
 $$
 
-#### 4.1.1 变量说明
+**变量说明**：
 
 $pos$：token在序列中的位置（0, 1, 2, ..., N-1）
 $i$：维度索引
