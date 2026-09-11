@@ -204,7 +204,7 @@ Here, $S$ is the current sequence length, i.e., the number of historical tokens 
 - **Linear projections + FFN**: $24 \times 4096^2 \approx 4.0 \times 10^8 \text{ FLOPs/layer}$.
 - **Attention**: $4 \times 3000 \times 4096 \approx 4.9 \times 10^7 \text{ FLOPs/layer}$.
 
-&emsp;&emsp;**Total for 32 layers = linear projections + FFN + attention ≈ 14.4 GFLOPs**. Using the A100's peak compute rate, the theoretical compute time is only about **0.05 ms**. Actual latency is much higher, and the larger issue is GPU-memory traffic.
+&emsp;&emsp;The **total memory traffic** is approximately **15.5 GB** (including both reads and writes; the newly written 0.5 MB can be considered negligible). Assuming the same A100 40GB, with an HBM bandwidth of 1.6 TB/s, the theoretical minimum time required to transfer approximately 15.5 GB of data between HBM and the compute units is $\frac{15.5\ \text{GB}}{1600\ \text{GB/s}} \approx 9.7\ \text{ms}$. Compared with the theoretical computation time based on the $\text{FLOPs}$, the memory transfer time is longer; therefore, **the GPU's compute units cannot be fully utilized**.
 
 **2. Memory traffic and bottleneck analysis**
 
@@ -388,7 +388,7 @@ The comparison shows that:
 
 **3. Bottleneck diagnosis for LLaMA-7B on an A100**
 
-&emsp;&emsp;Run LLaMA-7B on an A100 with the same model configuration as above and bf16 computation. The ridge point is $\frac{312 \times 10^{12}}{2.039 \times 10^{12}} \approx 153 \text{ FLOPs/Byte}$.
+&emsp;&emsp;Run LLaMA-7B on an A100  G40 with the same model configuration as above and bf16 computation. The ridge point is $\frac{312 \times 10^{12}}{1.6 \times 10^{12}} \approx 195 \text{ FLOPs/Byte}$.
 
 **Prefill AI**, assuming an input sequence length of $N = 100$:
 
