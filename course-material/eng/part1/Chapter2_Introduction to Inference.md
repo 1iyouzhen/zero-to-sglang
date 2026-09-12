@@ -205,7 +205,8 @@ Here, $S$ is the current sequence length, i.e., the number of historical tokens 
 - **Linear projections + FFN**: $24 \times 4096^2 \approx 4.0 \times 10^8 \text{ FLOPs/layer}$.
 - **Attention**: $4 \times 3000 \times 4096 \approx 4.9 \times 10^7 \text{ FLOPs/layer}$.
 
-&emsp;&emsp;The **total memory traffic** is approximately **15.5 GB** (including both reads and writes; the newly written 0.5 MB can be considered negligible). Assuming the same A100 40GB, with an HBM bandwidth of 1.6 TB/s, the theoretical minimum time required to transfer approximately 15.5 GB of data between HBM and the compute units is $\frac{15.5\ \text{GB}}{1600\ \text{GB/s}} \approx 9.7\ \text{ms}$. Compared with the theoretical computation time based on the $\text{FLOPs}$, the memory transfer time is longer; therefore, **the GPU's compute units cannot be fully utilized**.
+&emsp;&emsp;**Total computation for 32 layers = Linear Projection + FFN + Attention** ≈ **14.4 GFLOPs**. Based on the peak computational performance of an **A100 40GB**, the theoretical computation time is only approximately **0.05 ms**. However, the actual latency is far higher than this value, and more importantly, **memory consumption is the bigger bottleneck**.
+
 
 **2. Memory traffic and bottleneck analysis**
 
