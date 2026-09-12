@@ -152,7 +152,7 @@ The main computations in one forward pass are:
 
 - **QKV + Output Projection** 4 linear layers, totaling $2 \times 4 \times Nd^{2}=8Nd^2$ 
 - **FFN** 2 up-projection layers + 1 down-projection layer, totaling $2 \times 3 \times (\frac{8}{3}d \times Nd)=16Nd^2$ 
-- **Attention Core Computation** $QK^{\top}$ and $\mathrm{score}\times V$, totaling $2 \times 2 \times N^{2}d=4N^{2}d$ .
+- **Attention Core Computation**  $QK^{\top}$ and $\mathrm{score}\times V$, totaling $2 \times 2 \times N^{2}d=4N^{2}d$ .
 
 
 The total for one layer is $24 N d^{2} + 4 N^{2} d$, and for the entire model $\text{Total FLOPs} \approx L \times \bigl(24 N d^{2} + 4 N^{2} d\bigr)$. Substituting the values, the computation per layer is:
