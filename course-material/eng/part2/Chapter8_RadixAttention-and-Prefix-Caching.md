@@ -534,13 +534,13 @@ The detailed design and implementation are beyond the scope of this chapter. Int
 
 ---
 
-## 5 Summary and Review Questions
+## 5 Summary and Exercises
 
-### 5.1 Chapter Summary
+### 5.1 Summary
 
 This chapter first used requests A, B, and C to introduce Radix Tree construction and the basic principles of longest-prefix matching and node splitting. Then, assuming that the tree had already been built, it used R1 and R2 to analyze the complete Prefix Cache lifecycle—from request matching, scheduling, locking, and physical-space allocation to insertion, unlocking, and cache eviction. Finally, it connected these operations to the mini-sglang implementation, explaining details such as page alignment, reference counting, and duplicate-page reclamation, while briefly comparing the corresponding extensions in current SGLang.
 
-### 5.2 Review Questions
+### 5.2 Exercises
 
 **1. Why can eviction in a Radix Cache begin only with leaf nodes, rather than directly evicting an internal node or the root?**
 
