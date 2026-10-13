@@ -98,102 +98,13 @@ $$
 
 但无论哪种口径，核心问题都是一样的：历史 token 的 $K/V$ 本来可以复用，却因为没有保存而每步重算。模型 forward 是无状态的，你给它什么输入，它就从头算什么，不会记得上一步算过什么。
 
-## 3 核心思想：KV Cache 到底缓存了什么
+## 3 KV Cache 到底缓存了什么
 
 本章节的具体内容可以在part 1 第四章 找到详细介绍。
 
 **KV Cache 缓存的是在自回归生成过程中每一层 self-attention 里所有历史 token 经过 Key/Value 线性投影后得到的 $K$ 和 $V$ 张量**。它不缓存 Query，不缓存原始 token，也不缓存 logits。它的作用是让当前 token 只计算自己的 Query，然后直接查询历史 token 已经算好的 Key/Value。
 
-### 3.1 从单步公式看KV Cache 到底缓存了什么
-
-<div align="center">
-    <img src="./images/4-5-KVCache工作原理.png" alt="4-5-KVCache工作原理.png" width="800">
-<p><em>图 5. KV Cache 的工作原理</em></p>
-</div>
-
-在生成当前 token 之前，缓存中已经保存了此前所有历史 token 在同一层的 Key 和 Value：
-
-$$
-\mathcal{K}_{t-1}^{(l)} = [k_1^{(l)}, k_2^{(l)}, \ldots, k_{t-1}^{(l)}],
-\quad
-\mathcal{V}_{t-1}^{(l)} = [v_1^{(l)}, v_2^{(l)}, \ldots, v_{t-1}^{(l)}].
-$$
-
-注意，**缓存保存的不是原始 token**，也不是完整的隐藏状态，而是历史 token 经过本层 K/V 投影之后得到的结果。并且，**每一层都有自己的缓存，层与层之间不能共用**。
-
-当前 token 到来后，模型只需要计算它自己的 $q_t^{(l)}, k_t^{(l)}, v_t^{(l)}$，不需要把历史 token 重新送进网络。新的 Key 和 Value 会被追加到本层缓存的末尾：
-
-$$
-\mathcal{K}_t^{(l)} = [\mathcal{K}_{t-1}^{(l)}; k_t^{(l)}],
-\quad
-\mathcal{V}_t^{(l)} = [\mathcal{V}_{t-1}^{(l)}; v_t^{(l)}].
-$$
-
-### 3.2 缓存的是每层、每个 KV 头的 K/V
-
-<div align="center">
-    <img src="./images/4-6-分层KVCache.png" alt="4-6-分层KVCache.png" width="800">
-<p><em>图 6. 分层 KV Cache</em></p>
-</div>
-
-KV Cache 不是一份全局缓存，而是每一层 Transformer Block 都有属于自己自己的缓存。也就是说，如果模型有 $L$ 层，那么缓存里实际保存的是：
-
-$$
-\text{Layer }1:\quad K^{(1)},V^{(1)},
-$$
-
-$$
-\text{Layer }2:\quad K^{(2)},V^{(2)},
-$$
-
-$$
-\cdots
-$$
-
-$$
-\text{Layer }L:\quad K^{(L)},V^{(L)}.
-$$
-
-**不同层的 K/V 不能共享**，因为每一层的注意力参数 $W_Q^{(l)},W_K^{(l)},W_V^{(l)}$ 不同，得到的表示空间也不同。
-
-### 3.3 KV Cache只缓存 K/V，不缓存Q
-
-因为注意力的计算是用当前 token 的 Query 去查询历史 token 的 Key，并从历史 token 的 Value 中取信息。
-
-在 decode 阶段：
-
-- 当前 token 需要自己的 Query；
-- 当前 token 需要历史 token 的 Key，用来计算注意力权重；
-- 当前 token 需要历史 token 的 Value，用来加权求和；
-- 历史 token 的 Query 在后续生成中不再需要。
-
-历史 token 的 Query 只在该 token 作为当前**查询者**时有用。它当时已经完成了自己的注意力计算，并生成了对应的输出。**后续 token 不会再回头使用历史 Query。因此缓存 Query 没有收益，反而会增加显存和带宽开销**。
-
-这也是 KV Cache 这个名字的来源：**只缓存 Key 和 Value。**
-
-### 3.4 有 KV Cache 时的生成流程
-
-有 KV Cache 后，生成过程分为两个阶段。
-
-<div align="center">
-    <img src="./images/4-7-Prefill与Decode流程.png" alt="4-7-Prefill与Decode流程.png" width="800">
-<p><em>图 7. Prefill 与 Decode 的 KV Cache 流程</em></p>
-</div>
-
-**Prefill 阶段**：把完整 prompt 一次性送入模型。模型计算 prompt 中所有 token 在每一层的 K/V，并保存到 cache 中。同时得到第一个新 token。
-
-**Decode 阶段**：之后每次只输入一个新 token。模型不再重新计算历史 token 的 K/V，而是：
-
-1. 计算当前 token 在每一层的 $q_t,k_t,v_t$；
-2. 把当前层的 $k_t,v_t$ 追加到该层 cache 末尾；
-3. 用当前层的 $q_t$ 与更新后的 $K$ cache 计算注意力分数；
-4. 用注意力分数对 $V$ cache 加权求和；
-5. 得到当前 token 的输出，继续往上层计算；
-6. 最终得到下一个 token 的 logits，采样后进入下一轮。
-
-因此，decode 单步中，注意力不再需要计算完整历史长度的 $T \times T$ 矩阵，而是变成当前 Query 对历史 Key 的 $1 \times T$ 注意力。历史 token 的 K/V 被真正复用了。
-
-### 3.5 常见误解
+### 3.1 常见误解
 
 KV Cache 不是缓存整个序列的 hidden state。它缓存的是每一层注意力内部的 Key 和 Value 投影结果。
 

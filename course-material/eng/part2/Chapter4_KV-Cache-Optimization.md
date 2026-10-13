@@ -95,100 +95,13 @@ This is why you may encounter either $O(n^2)$ or $O(n^3)$, depending on what is 
 
 Regardless of the accounting method, the fundamental problem is the same: historical K/V can be reused but is recomputed at every step because it is not saved. A model forward pass is stateless; it recalculates whatever input it receives and does not remember the previous step.
 
-## 3 Core Idea: What Does KV Cache Store?
+## 3 What Does KV Cache Store?
 
 For a detailed introduction to KV Cache, see Chapter 4 of Part I.
 
 **KV Cache stores the K and V tensors produced when every historical token passes through Key and Value linear projections in every self-attention layer during autoregressive generation.** It does not store Query, raw tokens, or logits. It lets the current token compute only its own Query and directly look up the Keys and Values that historical tokens have already produced.
 
-### 3.1 What KV Cache Stores from the Single-Step Formula
-
-<div align="center">
-    <img src="./images/4-5-kv-cache-mechanism.png" alt="4-5-kv-cache-mechanism.png" width="800">
-<p><em>Figure 5. How KV Cache works</em></p>
-</div>
-
-Before the current token is generated, the cache already contains the Keys and Values of every preceding token at the same layer:
-
-$$
-\mathcal{K}_{t-1}^{(l)} = [k_1^{(l)}, k_2^{(l)}, \ldots, k_{t-1}^{(l)}],
-\quad
-\mathcal{V}_{t-1}^{(l)} = [v_1^{(l)}, v_2^{(l)}, \ldots, v_{t-1}^{(l)}].
-$$
-
-**The cache does not preserve raw tokens** or complete hidden states. It stores the results after historical tokens have passed through K/V projection at this layer. **Every layer has its own cache, and caches cannot be shared between layers.**
-
-When the current token arrives, the model computes only its own $q_t^{(l)}$, $k_t^{(l)}$, and $v_t^{(l)}$; it does not send historical tokens through the network again. The new Key and Value are appended to the cache for this layer:
-
-$$
-\mathcal{K}_t^{(l)} = [\mathcal{K}_{t-1}^{(l)}; k_t^{(l)}],
-\quad
-\mathcal{V}_t^{(l)} = [\mathcal{V}_{t-1}^{(l)}; v_t^{(l)}].
-$$
-
-### 3.2 K/V Is Cached for Every Layer and Every KV Head
-
-<div align="center">
-    <img src="./images/4-6-per-layer-kv-cache.png" alt="4-6-per-layer-kv-cache.png" width="800">
-<p><em>Figure 6. Per-layer KV Cache</em></p>
-</div>
-
-KV Cache is not one global cache. Each Transformer block has its own cache. If a model has $L$ layers, the cache stores:
-
-$$
-\text{Layer }1:\quad K^{(1)},V^{(1)},
-$$
-
-$$
-\text{Layer }2:\quad K^{(2)},V^{(2)},
-$$
-
-$$
-\cdots
-$$
-
-$$
-\text{Layer }L:\quad K^{(L)},V^{(L)}.
-$$
-
-### 3.3 Why Cache Only K/V, Not Q?
-
-Attention uses the current token's Query to query historical tokens' Keys and retrieve information from their Values.
-
-During decode:
-
-- The current token needs its own Query.
-- The current token needs historical Keys to compute attention weights.
-- The current token needs historical Values for the weighted sum.
-- Historical token Queries are not needed in later generation steps.
-
-A historical token's Query is useful only when that token itself is the current query. At that time, it has already completed its attention computation and produced its output. Later tokens never need to reuse a historical Query. Caching Query therefore has no benefit and would instead increase memory and bandwidth use.
-
-This is why it is called KV Cache: it stores only Key and Value.
-
-### 3.4 Generation Flow with KV Cache
-
-With KV Cache, generation has two stages.
-
-<div align="center">
-    <img src="./images/4-7-prefill-and-decode-flow.png" alt="4-7-prefill-and-decode-flow.png" width="800">
-<p><em>Figure 7. KV Cache flow in prefill and decode</em></p>
-</div>
-
-**Prefill** sends the complete prompt to the model once. The model computes K/V for all prompt tokens in every layer and saves them in the cache. It also produces the first new token.
-
-**Decode** then accepts only one new token at a time. Rather than recomputing historical K/V, it:
-
-1. Computes $q_t$, $k_t$, and $v_t$ for the current token in every layer.
-2. Appends the current layer's $k_t$ and $v_t$ to its cache.
-3. Computes attention scores between the current layer's $q_t$ and the updated K cache.
-4. Uses the attention scores to compute a weighted sum of the V cache.
-5. Produces the current token's output and continues through higher layers.
-6. Produces logits for the next token, samples it, and starts the next iteration.
-
-In a decode step, attention no longer computes a full $T \times T$ matrix over the history. Instead, the current Query attends over historical Keys through a $1 \times T$ attention operation. Historical K/V is genuinely reused.
-
-### 3.5 Common Misconceptions
+### 3.1 Common Misconceptions
 
 KV Cache does not cache the hidden state of the entire sequence. It stores the Key and Value projection results inside attention for every layer.
 
@@ -206,7 +119,7 @@ KV Cache fundamentally preserves the Keys and Values of historical tokens at eac
 
 Without KV Cache, step $t$ recomputes K/V for every token from 1 through $t$. With KV Cache, step $t$ computes K/V only for the current token and appends it to the cache. Per-step attention changes from $T \times T$ to $1 \times T$, which is the core idea behind KV Cache optimization.
 
-## 4 Complexity Derivation: From O(n²) to O(n)
+## 4 KV Cache: From O(n²) to O(n)
 
 This section focuses only on complexity changes caused by sequence length. To simplify the analysis, we ignore constants such as the number of layers $L$, hidden dimension $d$, and number of attention heads $H$, and consider only how computation scales with the number of tokens.
 

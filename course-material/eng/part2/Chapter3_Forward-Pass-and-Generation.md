@@ -272,25 +272,6 @@ From the perspective of the generation loop:
 
 This distinction also appears in implementations: the first forward pass receives the complete prompt and produces the first token and the cache; the subsequent loop passes only the token from the previous step together with the cache, producing the next token. The initial pass and the later loop correspond to prefill and decode.
 
-### 4.4 Why KV Cache Speeds Up Generation
-
-To understand KV Cache, return to self-attention. In a Transformer's attention computation, each token produces Query, Key, and Value representations. For a new token, its Query computes attention weights against the Keys of all historical tokens, then uses those weights to aggregate their Values.
-
-**A historical token's Key and Value depend only on that token's representation and the model weights; they do not change when new tokens are generated later.** Once a token's Key and Value have been computed, they can therefore be reused in subsequent steps.
-
-Without KV Cache, the model must send the entire prefix through the network for every new token and recompute Key and Value for all historical tokens. The longer the history, the more repeated work there is. When generating token 100, much of the computation for the preceding 99 tokens has already been performed but would still be repeated.
-
-With KV Cache, the process changes:
-
-- During prefill, compute the Key and Value for every prompt token once and save them for each layer.
-- During decode, compute Query, Key, and Value only for the newly generated token.
-- Append the new Key and Value to the cache.
-- Use the new Query to read all historical Keys and Values from the cache and perform attention.
-
-Each step now processes only the newly added token rather than the whole sequence. Historical Keys and Values are no longer recomputed, saving substantial matrix computation. The savings become more pronounced as the sequence grows, making KV Cache essential for practical autoregressive generation.
-
-KV Cache is not free, however. It consumes considerable GPU memory, growing with the number of layers, attention heads, sequence length, and batch size. In long-context generation, KV Cache often accounts for most memory use. Decode must also read the cache at every step, so memory bandwidth can become a bottleneck. This motivates optimizations such as paged memory management, cache quantization, and grouped-query attention.
-
 ## 5 Key Concepts
 
 **Hidden State**
