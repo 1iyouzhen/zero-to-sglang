@@ -1,4 +1,4 @@
-# Chapter 9 Multi-process & Tensor Parallelism (Concepts)
+# Chapter 9 Multi-process & Tensor Parallelism
 
 In the previous chapters, we followed a request through the complete end-to-end processing pipeline and examined paged KV Cache, RadixAttention, and prefix caching. These mechanisms explain how to manage and reuse the KV Cache efficiently, but deployment raises a more fundamental question: **if a single GPU does not have enough memory or compute capacity, how can multiple GPUs work together to run the same model?**
 
