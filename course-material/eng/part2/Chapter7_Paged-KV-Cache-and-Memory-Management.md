@@ -4,13 +4,11 @@ Welcome to Chapter 7 of Part II of the zero-to-sglang course. We have covered th
 
 ## 1 Learning Objectives
 
-This chapter focuses on the **core principles of Paged KV Cache** and **GPU-memory management in LLM inference engines** in three parts:
+This chapter focuses on the **core principles of Paged KV Cache** in two parts:
 
-1. **The memory problems of contiguous allocation**: Starting from conventional contiguous KV Cache allocation, analyze internal fragmentation, external fragmentation, and the difficulty of dynamic growth. This leads to the central tension paging addresses: **efficient, on-demand GPU-memory use (non-contiguous)** versus **Attention's need for a complete K/V sequence (logically contiguous)**.
+1. **The memory problems of contiguous allocation**: Starting from conventional contiguous KV Cache allocation, analyze internal fragmentation, external fragmentation, and the difficulty of dynamic growth. This leads to the central tension paging addresses: **efficient, on-demand GPU-memory allocation (non-contiguous)** versus **Attention's need for a complete K/V sequence (logically contiguous)**.
 
 2. **Paging abstractions and the PagedAttention algorithm**: Explain the core abstractions of paging, including physical Blocks, Slots, and the Block Table; describe the mapping from logical Blocks to physical Blocks; and examine how PagedAttention reads K/V block by block from non-contiguous GPU memory while remaining mathematically equivalent to ordinary Attention.
-
-3. **Memory-manager and scheduler coordination**: Explain how a memory manager handles the complete Block lifecycle—allocation, filling, sharing, copy-on-write (CoW), and reclamation—and how it coordinates with the Scheduler to trigger preemption when GPU memory is insufficient, through swapping (Swap) or recomputation (Recompute), thereby enabling efficient memory reuse.
 
 ## 2 Why Paging Is Needed: The GPU-Memory Dilemma of Contiguous KV Cache
 
@@ -61,7 +59,7 @@ For example, a system may have 3.60 GiB of free GPU memory split across five iso
 
 A defining feature of autoregressive generation is that **sequence length grows at every step and its final length is unknown**. This creates an additional problem for contiguous allocation. Reserving enough space at request arrival wastes a large amount of capacity; allocating a small region first instead requires **periodically reallocating and copying** the entire KV Cache into a larger contiguous region as the sequence grows. These repeated reallocations and copies add overhead and can fail when no larger contiguous region is available.
 
-More fundamentally, contiguous allocation cannot support decoding algorithms that create multiple output branches. In parallel sampling and Beam Search, one request produces multiple candidate sequences that share most of their prefix KV Cache. Under contiguous allocation, each sequence keeps its KV Cache in an independent contiguous region, so **memory cannot be shared across sequences**.
+More fundamentally, contiguous allocation cannot **efficiently** support decoding algorithms that create multiple output branches. In parallel sampling and Beam Search, one request produces multiple candidate sequences that share most of their prefix KV Cache. Under contiguous allocation, each sequence keeps its KV Cache in an independent contiguous region, so the prefix can be shared only by duplicating and copying it, and **KV Cache cannot be shared efficiently**.
 
 ### 2.3 The Central Tension That Paging Resolves
 
@@ -283,6 +281,6 @@ This chapter built a complete chain of reasoning for Paged KV Cache and memory m
 
 ## References
 
-- [Efficient Memory Management for Large Language Model Serving with PagedAttention](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2023/EECS-2023-19.pdf)
+- [Efficient Memory Management for Large Language Model Serving with PagedAttention](https://arxiv.org/abs/2309.06180)
 - [Milakov and Gimelshein, Online Normalizer Calculation for Softmax](https://arxiv.org/abs/1805.02867)
 - [Tencent Cloud developer article](https://cloud.tencent.cn/developer/article/2616536)

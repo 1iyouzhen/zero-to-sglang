@@ -4,13 +4,11 @@
 
 ## 1 本章学习目标
 
-本章围绕 **Paged KV Cache 的核心原理** 与 **大模型推理引擎的显存管理机制** 展开，共分为三个部分：
+本章围绕 **Paged KV Cache 的核心原理** 展开，共分为两个部分：
 
-1. **连续分配的显存困境**：从传统的连续 KV Cache 分配讲起，分析内部碎片、外部碎片以及动态扩展难题，引出分页机制要解决的核心矛盾：**显存按需高效利用（非连续）** 与 **Attention 计算需要完整 K/V 序列（逻辑连续）** 之间的冲突。
+1. **连续分配的显存困境**：从传统的连续 KV Cache 分配讲起，分析内部碎片、外部碎片以及动态扩展难题，引出分页机制要解决的核心矛盾：**显存按需高效分配（非连续）** 与 **Attention 计算需要完整 K/V 序列（逻辑连续）** 之间的冲突。
 
 2. **分页抽象与 PagedAttention 算法**：讲解分页的核心抽象，包括物理块（Block）、槽位（Slot）与块表（Block Table），阐述逻辑块到物理块的映射机制。并深入剖析 PagedAttention 算法如何在非连续显存上按块（Block-wise）读取 K/V，实现与普通 Attention 数学等价的计算。
-
-3. **内存管理器与调度协同**：说明内存管理器如何管理 Block 的完整生命周期（分配、填充、共享、写时复制 CoW、回收），并揭示内存管理器如何与 Scheduler 交互，在显存不足时触发抢占（换出 Swap 或重计算 Recompute）机制，最终实现高效的显存复用。
 
 ## 2 为什么需要分页，连续 KV Cache 的显存困境
 
@@ -28,7 +26,7 @@
 </div>
 由于 GPU 的高效计算需要张量在显存中保持连续布局，传统推理引擎采用 **连续分配** 策略：当请求到达时，为它预分配一块**连续显存空间**，大小等于该请求的 **最大可能序列长度**（如 2048 个 Token）乘以每个 Token 的 KV 缓存大小。例如，系统为每个请求预分配形状为 `[batch, layers, max_seq_len, num_heads, head_dim]` 的连续 KV 缓存。
 
-这种设计**在逻辑上是合理的**：它保证了 Attention 计算时 K/V 矩阵在显存中的连续性，从而可以高效地进行矩阵乘法。但问题在于，**它假设可以提前知道每个请求的最终序列长度**，但是而这一假设在真实的推理负载中并不成立。
+这种设计**在逻辑上是合理的**：它保证了 Attention 计算时 K/V 矩阵在显存中的连续性，从而可以高效地进行矩阵乘法。但问题在于，**它假设可以提前知道每个请求的最终序列长度**，而这一假设在真实的推理负载中并不成立。
 
 ### 2.2 显存碎片与浪费问题
 
@@ -60,7 +58,7 @@
 
 自回归生成的一个本质特征是：**序列长度在每一步都在动态增长，且最终长度不可预知**。这给连续分配方案带来了额外的困难。如果系统在请求开始时预留足够的空间，就会造成大量闲置浪费；如果先分配较小的空间，随着序列增长就需要**周期性地重新分配和拷贝**整块 KV Cache 到更大的连续区域。这种频繁的重新分配和拷贝不仅带来性能开销，还可能因为找不到更大的连续空间而失败。
 
-更根本的问题是，**连续分配方案无法支持需要多个输出分支的解码算法**。在并行采样和 Beam Search 等场景中，一个请求会生成多个候选输出序列，这些序列共享大部分前缀 KV Cache。然而，在连续分配方案中，每个序列的 KV Cache 存储在各自独立的连续空间中，**无法实现跨序列的显存共享**。
+更根本的问题是，**连续分配方案无法高效支持需要多个输出分支的解码算法**。在并行采样和 Beam Search 等场景中，一个请求会生成多个候选输出序列，这些序列共享大部分前缀 KV Cache。然而，在连续分配方案中，每个序列的 KV Cache 存储在各自独立的连续空间中，只能通过重复拷贝前缀来实现共享，**无法高效共享 KV Cache**。
 
 ### 2.3 分页要解决的核心矛盾
 
@@ -282,6 +280,6 @@ PagedAttention 将在线 Softmax 与分块读取相结合。每个逻辑块被�
 
 ## 参考资料
 
-- [《Efficient Memory Management for Large Language Model Serving with PagedAttention》](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2023/EECS-2023-19.pdf)
+- [《Efficient Memory Management for Large Language Model Serving with PagedAttention》](https://arxiv.org/abs/2309.06180)
 - [Milakov 和 Gimelshein：《Online Normalizer Calculation for Softmax》](https://arxiv.org/abs/1805.02867)
 - [https://cloud.tencent.cn/developer/article/2616536](https://cloud.tencent.cn/developer/article/2616536)
