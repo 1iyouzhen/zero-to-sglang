@@ -27,8 +27,6 @@ During autoregressive decoding, Attention at step $t$ needs the Key and Value ve
 
 Because efficient GPU computation favors contiguous tensor layouts, traditional inference engines allocate a **contiguous GPU-memory region** when a request arrives. Its size equals the request's **maximum possible sequence length**—for example, 2,048 tokens—multiplied by the KV-cache size per token. A system might therefore preallocate a contiguous KV Cache with shape `[batch, layers, max_seq_len, num_heads, head_dim]` for each request.
 
-This design is **logically reasonable**: it keeps the K/V matrix contiguous in GPU memory during Attention, enabling efficient matrix operations. The problem is that it assumes the final length of each request is known beforehand, an assumption that does not hold for real inference workloads.
-
 ### 2.2 GPU-Memory Fragmentation and Waste
 
 Preallocation creates three types of GPU-memory waste. Together, they significantly reduce utilization: only **a portion** of GPU memory holds actual token state, while the rest is idle.
