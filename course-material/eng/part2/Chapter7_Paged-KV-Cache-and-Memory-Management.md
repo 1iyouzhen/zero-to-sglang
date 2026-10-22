@@ -166,7 +166,11 @@ $$
 The final attention output is
 
 $$
-o_i=\sum_{j,t}\frac{\exp(\tilde s_{i,j,t})}{\sum_{j',t'}\exp(\tilde s_{i,j',t'})}v_{j,t},
+o_i=
+\sum_{j,t}
+\frac{\exp(\tilde s_{i,j,t})}
+{\sum_{j',t'}\exp(\tilde s_{i,j',t'})}
+v_{j,t},
 $$
 
 where the summation is performed only over valid tokens; invalid tokens satisfy $\tilde s_{i,j,t}=-\infty$, and their exponential weights are 0. In implementation, K/V are read block by block and accumulated block by block using online Softmax; the result is equivalent to the above formula.
