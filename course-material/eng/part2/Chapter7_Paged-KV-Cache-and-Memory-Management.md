@@ -143,37 +143,35 @@ The core idea of PagedAttention is to **decompose Attention at KV-Block granular
 
 **Block-granular read path**
 
-For each query token \(i\), the kernel executes the following steps:
+For each query token $i$, the kernel executes the following steps:
 
-1. **Compute the number of logical blocks**: For query \(i\), let its visible KV length be \(L_i\). In causal decoding, we usually have \(L_i=i+1\), or \(L_i\) is the visible length of the current KV cache; if discussing the full sequence and temporarily not considering causal trimming, we may take \(L_i=L\). The number of logical blocks is \(\lceil L_i/b\rceil\), where \(b\) is the block size (a common default value is 16, and it may also be set to 32 or 64).
+1. **Compute the number of logical blocks**: For query $i$, let its visible KV length be $L_i$. In causal decoding, we usually have $L_i=i+1$, or $L_i$ is the visible length of the current KV cache; if discussing the full sequence and temporarily not considering causal trimming, we may take $L_i=L$. The number of logical blocks is $\lceil L_i/b\rceil$, where $b$ is the block size (a common default value is 16, and it may also be set to 32 or 64).
 
-2. **Iterate block by block**: The kernel traverses each logical block \(j\) (\(j=0,1,\ldots,\lceil L_i/b\rceil-1\)), obtains the physical block number corresponding to this logical block by looking it up in `block_table`, and then reads the K/V data of all valid slots in this physical block. This process gathers the discrete physical blocks into the compute unit.
+2. **Iterate block by block**: The kernel traverses each logical block $j$ ($j=0,1,\ldots,\lceil L_i/b\rceil-1$), obtains the physical block number corresponding to this logical block by looking it up in `block_table`, and then reads the K/V data of all valid slots in this physical block. This process gathers the discrete physical blocks into the compute unit.
 
-3. **Intra-block attention computation**: For the current logical block \(j\), the global position of the \(t\)-th token in the block is
-   $$
-   p=jb+t,
-   $$
-   where \(t=0,1,\ldots,b-1\), and the last block processes only valid slots with \(p<L_i\). Compute the dot product of query \(q_i\) with the keys in this block, and apply the causal mask:
-   $$
-   s_{i,j,t}=\frac{q_i^\top k_{j,t}}{\sqrt d},
-   \qquad
-   \tilde s_{i,j,t}=
-   \begin{cases}
-   s_{i,j,t}, & p\le i,\\
-   -\infty, & p>i.
-   \end{cases}
-   $$
-   The final attention output is
-   $$
-   o_i=
-   \sum_{j,t}
-   \frac{\exp(\tilde s_{i,j,t})}
-   {\sum_{j',t'}\exp(\tilde s_{i,j',t'})}
-   v_{j,t},
-   $$
-   where the summation is performed only over valid tokens; invalid tokens satisfy \(\tilde s_{i,j,t}=-\infty\), and their exponential weights are 0. In implementation, K/V are read block by block and accumulated block by block using online Softmax; the result is equivalent to the above formula.
+3. **Intra-block attention computation**: For the current logical block $j$, the global position of the $t$-th token in the block is
 
-4. **Cross-block accumulation**: Because the exponential sum and weighted output of Softmax cannot be directly added under different references, the computation results of individual blocks cannot simply be added together. PagedAttention uses **Online Softmax** technology to maintain three running statistics—the current maximum \(m_i\), the exponential sum \(\ell_i\), and the weighted output \(O_i\)—and updates these three statistics after reading each new block, thereby correctly merging the results of individual blocks.
+$$
+p=jb+t,
+$$
+
+where $t=0,1,\ldots,b-1$, and the last block processes only valid slots with $p<L_i$. Compute the dot product of query $q_i$ with the keys in this block, and apply the causal mask:
+
+$$
+s_{i,j,t}=\frac{q_i^\top k_{j,t}}{\sqrt d},
+\qquad
+\tilde s_{i,j,t}=\begin{cases}s_{i,j,t}, & p\le i,\\-\infty, & p>i.\end{cases}
+$$
+
+The final attention output is
+
+$$
+o_i=\sum_{j,t}\frac{\exp(\tilde s_{i,j,t})}{\sum_{j',t'}\exp(\tilde s_{i,j',t'})}v_{j,t},
+$$
+
+where the summation is performed only over valid tokens; invalid tokens satisfy $\tilde s_{i,j,t}=-\infty$, and their exponential weights are 0. In implementation, K/V are read block by block and accumulated block by block using online Softmax; the result is equivalent to the above formula.
+
+4. **Cross-block accumulation**: Because the exponential sum and weighted output of Softmax cannot be directly added under different references, the computation results of individual blocks cannot simply be added together. PagedAttention uses **Online Softmax** technology to maintain three running statistics—the current maximum $m_i$, the exponential sum $\ell_i$, and the weighted output $O_i$—and updates these three statistics after reading each new block, thereby correctly merging the results of individual blocks.
 
 **Impact of and Optimizations for Non-contiguous Memory Access**
 
@@ -185,7 +183,7 @@ We can mitigate this problem through two-level optimization: **Memory Coalescing
 
 - **Shared-memory staging**: K/V blocks read from global memory are first loaded into shared memory and then subjected to intensive computation in shared memory. Because the latency of shared memory is much lower than that of global memory, this design effectively hides the latency of non-contiguous global memory access.
 
-- **Block size tuning**: The block size \(b\) is a key parameter affecting kernel performance. A smaller block increases the lookup overhead of the Block Table, while a larger block increases internal fragmentation. Common implementations use 16 and evaluate 32 or 64 depending on the workload.
+- **Block size tuning**: The block size $b$ is a key parameter affecting kernel performance. A smaller block increases the lookup overhead of the Block Table, while a larger block increases internal fragmentation. Common implementations use 16 and evaluate 32 or 64 depending on the workload.
 
 Although PagedAttention introduces the overhead of Block Table indirect addressing and non-contiguous reads, through the above optimizations these overheads are effectively controlled, and the benefits brought by memory management far exceed the kernel overhead.
 
@@ -197,13 +195,13 @@ The core claim of PagedAttention is: **computing Attention in blocks on non-cont
 
 The key premise for equivalence to hold is: given the attention score and Value of each valid token, the attention output is a weighted sum of the Value vectors; block-wise reading only changes the computation order and does not change the numerical values of K/V.
 
-Specifically, for a fixed query \(i\), let \(r\) range over valid keys satisfying \(p_r\le i\). The score
+Specifically, for a fixed query $i$, let $r$ range over valid keys satisfying $p_r\le i$. The score
 
 $$
 s_{i,r}=\frac{q_i^\top k_r}{\sqrt d}
 $$
 
-depends only on the query vector \(q_i\) and the key vector \(k_r\), and can be computed independently per token. To unify notation, define the causally masked score
+depends only on the query vector $q_i$ and the key vector $k_r$, and can be computed independently per token. To unify notation, define the causally masked score
 
 $$
 \tilde s_{i,r}=
@@ -219,7 +217,7 @@ $$
 o_i=\sum_r\alpha_{i,r}v_r
 $$
 
-is a weighted sum of the Value vectors; the weights \(\alpha_{i,r}\) are obtained by Softmax-normalizing the scores of this query over all visible keys:
+is a weighted sum of the Value vectors; the weights $\alpha_{i,r}$ are obtained by Softmax-normalizing the scores of this query over all visible keys:
 
 $$
 \alpha_{i,r}
@@ -231,19 +229,22 @@ Therefore, K/V can be grouped and processed at any granularity; Online Softmax i
 
 **Block Merging Mechanism of Online Softmax**
 
-The mathematical definition of standard Softmax itself does not require two passes; however, to avoid exponential overflow, common numerically stable implementations usually first obtain all attention scores and compute the global maximum \(m\), and then compute the exponential sum and weighted sum. This process usually requires two passes: the first pass determines the global maximum \(m\), and the second pass computes the exponential sum \(\ell\) and output \(O\). In block-wise Attention that allows only a single-pass streaming read of K/V, the problem is: PagedAttention iteratively reads K/V block by block. If it is required to update the statistics after reading one block without rereading already-read blocks, then the global maximum cannot be obtained before all blocks have been read。
+The mathematical definition of standard Softmax itself does not require two passes; however, to avoid exponential overflow, common numerically stable implementations usually first obtain all attention scores and compute the global maximum $m$, and then compute the exponential sum and weighted sum. This process usually requires two passes: the first pass determines the global maximum $m$, and the second pass computes the exponential sum $\ell$ and output $O$. In block-wise Attention that allows only a single-pass streaming read of K/V, the problem is: PagedAttention iteratively reads K/V block by block. If it is required to update the statistics after reading one block without rereading already-read blocks, then the global maximum cannot be obtained before all blocks have been read。
 
-Online Softmax solves this problem through a **running recurrence**. For a fixed query \(i\), iterate over logical blocks \(j\) and maintain three running statistics:
+Online Softmax solves this problem through a **running recurrence**. For a fixed query $i$, iterate over logical blocks $j$ and maintain three running statistics:
 
-- \(m_i\): the **maximum of the scores seen so far** up to the current block. Before all blocks are processed, it is not the final global maximum but only the current “so far” running maximum; after all blocks are processed, it is the global maximum;
-- \(\ell_i\): the **exponential sum** up to the current block, using the current \(m_i\) as the reference, i.e.
-  $$
-  \ell_i=\sum_{\text{seen}}e^{s-m_i};
-  $$
-- \(O_i\): the **unnormalized weighted output** up to the current block, using the current \(m_i\) as the reference, i.e.
-  $$
-  O_i=\sum_{\text{seen}}e^{s-m_i}v.
-  $$
+- $m_i$: the **maximum of the scores seen so far** up to the current block. Before all blocks are processed, it is not the final global maximum but only the current “so far” running maximum; after all blocks are processed, it is the global maximum;
+- $\ell_i$: the **exponential sum** up to the current block, using the current $m_i$ as the reference, i.e.
+
+$$
+\ell_i=\sum_{\text{seen}}e^{s-m_i};
+$$
+
+- $O_i$: the **unnormalized weighted output** up to the current block, using the current $m_i$ as the reference, i.e.
+
+$$
+O_i=\sum_{\text{seen}}e^{s-m_i}v.
+$$
 
 Initialize as
 
@@ -251,9 +252,9 @@ $$
 m_i=-\infty,\qquad \ell_i=0,\qquad O_i=0.
 $$
 
-\(\ell_i\) and \(O_i\) **must always share the same reference \(m_i\)**. They are a coupled pair of quantities. If either one alone changes the reference without synchronously changing the other, subsequent normalization will be incorrect.
+$\ell_i$ and $O_i$ **must always share the same reference $m_i$**. They are a coupled pair of quantities. If either one alone changes the reference without synchronously changing the other, subsequent normalization will be incorrect.
 
-Below, denote the currently read logical block by \(\mathcal B_j\). The scores in online Softmax all refer to the causally masked scores \(\tilde s_{i,j,t}\); invalid positions are \(-\infty\), their exponential weights are 0, and the local maximum is also taken only over valid tokens. After reading a new block, compute the **local statistics** of the block only if the block has at least one valid token for the current query:
+Below, denote the currently read logical block by $\mathcal B_j$. The scores in online Softmax all refer to the causally masked scores $\tilde s_{i,j,t}$; invalid positions are $-\infty$, their exponential weights are 0, and the local maximum is also taken only over valid tokens. After reading a new block, compute the **local statistics** of the block only if the block has at least one valid token for the current query:
 
 $$
 m_{i,j}=\max_{t\in\mathcal B_j}\tilde s_{i,j,t},
@@ -265,7 +266,7 @@ $$
 
 If a block is entirely masked for the current query, its contribution is 0; it can be skipped directly and does not participate in subsequent merging.
 
-The local statistics likewise use the “block's own maximum” \(m_{i,j}\) as the reference. At this point, it cannot be directly added to the old \(\ell_i,O_i\), because the old accumulated quantities use \(m_i\) as the reference and the new block uses \(m_{i,j}\) as the reference—**the two sides are not subtracting the same number**. The exponential function is nonlinear, and exponential sums and weighted outputs under different references cannot be directly added; direct addition is equivalent to mixing two quantities on different scales, and the result no longer corresponds to any valid Softmax.
+The local statistics likewise use the “block's own maximum” $m_{i,j}$ as the reference. At this point, it cannot be directly added to the old $\ell_i,O_i$, because the old accumulated quantities use $m_i$ as the reference and the new block uses $m_{i,j}$ as the reference—**the two sides are not subtracting the same number**. The exponential function is nonlinear, and exponential sums and weighted outputs under different references cannot be directly added; direct addition is equivalent to mixing two quantities on different scales, and the result no longer corresponds to any valid Softmax.
 
 Merging is completed in three steps.
 
@@ -281,66 +282,50 @@ $$
 e^{s-m_i}\cdot e^{m_i-m_i'}=e^{s-m_i'}.
 $$
 
-That is, each term in the old accumulated quantities, as long as it is uniformly multiplied by the factor \(e^{m_i-m_i'}\), changes from “using \(m_i\) as the reference” to “using \(m_i'\) as the reference”. Since \(m_i'\ge m_i\), this factor is always \(\le 1\), so it shrinks the old terms—when the new maximum is larger, the old exponential terms should indeed become smaller relative to the new reference. \(\ell_i\) and \(O_i\) must be multiplied by **the same factor**; otherwise they no longer share the same reference:
+That is, each term in the old accumulated quantities, as long as it is uniformly multiplied by the factor $e^{m_i-m_i'}$, changes from “using $m_i$ as the reference” to “using $m_i'$ as the reference”. Since $m_i'\ge m_i$, this factor is always $\le 1$, so it shrinks the old terms—when the new maximum is larger, the old exponential terms should indeed become smaller relative to the new reference. $\ell_i$ and $O_i$ must be multiplied by **the same factor**; otherwise they no longer share the same reference:
 
 $$
-\ell_i\cdot e^{m_i-m_i'},
-\qquad
+\ell_i\cdot e^{m_i-m_i'}, 
+\qquad 
 O_i\cdot e^{m_i-m_i'}.
 $$
 
-**Step 3: Convert the new block to the same new reference as well, and then add.** The new block originally uses \(m_{i,j}\) as the reference; after multiplying by \(e^{m_{i,j}-m_i'}\), it is on the same reference as the old accumulated quantities:
+**Step 3: Convert the new block to the same new reference as well, and then add.** The new block originally uses $m_{i,j}$ as the reference; after multiplying by $e^{m_{i,j}-m_i'}$, it is on the same reference as the old accumulated quantities:
 
 $$
-\ell_i'=
-\ell_i e^{m_i-m_i'}
-+
-\ell_{i,j}e^{m_{i,j}-m_i'},
+\ell_i'= \ell_i e^{m_i-m_i'} + \ell_{i,j}e^{m_{i,j}-m_i'},
 $$
 
 $$
-O_i'=
-O_i e^{m_i-m_i'}
-+
-O_{i,j}e^{m_{i,j}-m_i'}.
+O_i'= O_i e^{m_i-m_i'} + O_{i,j}e^{m_{i,j}-m_i'}.
 $$
 
-These two equations are the merging formulas of online Softmax. Their meaning is not two isolated operations but **the same action**: convert two sets of quantities counted under different references each to the new reference \(m_i'\), and then add them.
+These two equations are the merging formulas of online Softmax. Their meaning is not two isolated operations but **the same action**: convert two sets of quantities counted under different references each to the new reference $m_i'$, and then add them.
 
-When the new maximum **indeed jumps**, i.e., \(m_i'>m_i\), the correction factor \(e^{m_i-m_i'}\) for the old accumulated quantities is strictly less than 1. If the old \(\ell_i>0\), then the old \(\ell_i\) decreases numerically after multiplication by this factor; each nonzero component of the old \(O_i\) is also scaled by the same factor, and its absolute value decreases. This is not information loss; rather, the old terms have been converted to a larger reference scale; the magnitude of the decrease exactly corresponds to the magnitude of the reference increase. If the old \(\ell_i=0\), it remains 0 after multiplication by this factor.
+When the new maximum **indeed jumps**, i.e., $m_i'>m_i$, the correction factor $e^{m_i-m_i'}$ for the old accumulated quantities is strictly less than 1. If the old $\ell_i>0$, then the old $\ell_i$ decreases numerically after multiplication by this factor; each nonzero component of the old $O_i$ is also scaled by the same factor, and its absolute value decreases. This is not information loss; rather, the old terms have been converted to a larger reference scale; the magnitude of the decrease exactly corresponds to the magnitude of the reference increase. If the old $\ell_i=0$, it remains 0 after multiplication by this factor.
 
-After all blocks have been processed, for each query \(i\), the final output is
+After all blocks have been processed, for each query $i$, the final output is
 
 $$
 o_i=\frac{O_i}{\ell_i}.
 $$
 
-At this point, \(m_i\) is already the final running maximum. This result is mathematically equivalent to computing Softmax once over the complete set of visible keys; in actual floating-point operations, small differences may occur due to different rounding orders, but this is not an algorithmic approximation. The reason for the equivalence can be stated in one sentence: throughout the streaming process, \(\ell_i\) and \(O_i\) are always synchronously scaled using **the same running maximum \(m_i\)** as the reference. When performing the final division:
+At this point, $m_i$ is already the final running maximum. This result is mathematically equivalent to computing Softmax once over the complete set of visible keys; in actual floating-point operations, small differences may occur due to different rounding orders, but this is not an algorithmic approximation. The reason for the equivalence can be stated in one sentence: throughout the streaming process, $\ell_i$ and $O_i$ are always synchronously scaled using **the same running maximum $m_i$** as the reference. When performing the final division:
 
 $$
-o_i
-=
-\frac{O_i}{\ell_i}
-=
-\frac{\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}v_{j,t}}
-{\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}},
+o_i=\frac{O_i}{\ell_i}=\frac{\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}v_{j,t}}{\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}},
 $$
 
 where the summation is performed only over valid tokens. Because
 
 $$
-e^{\tilde s_{i,j,t}-m_i}
-=
-e^{\tilde s_{i,j,t}}e^{-m_i},
+e^{\tilde s_{i,j,t}-m_i} = e^{\tilde s_{i,j,t}}e^{-m_i},
 $$
 
-both numerator and denominator contain the common factor \(e^{-m_i}\), so it cancels:
+both numerator and denominator contain the common factor $e^{-m_i}$, so it cancels:
 
 $$
-o_i
-=
-\frac{\sum_{j,t}e^{\tilde s_{i,j,t}}v_{j,t}}
-{\sum_{j,t}e^{\tilde s_{i,j,t}}}.
+o_i =\frac{\sum_{j,t}e^{\tilde s_{i,j,t}}v_{j,t}}{\sum_{j,t}e^{\tilde s_{i,j,t}}}.
 $$
 
 This is exactly the definition of the standard Softmax weighted sum. Online Softmax does not change the mathematical object of Softmax; it merely chooses a **dynamically updated reference** to realize this object; since all intermediate quantities always use this reference synchronously, the final reference automatically disappears during normalization. This formulation of single-pass exact normalization computation can be traced back to [Milakov and Gimelshein: *Online Normalizer Calculation for Softmax*](https://arxiv.org/abs/1805.02867); on this basis, FlashAttention applies block-wise online Softmax to attention computation, computing a result that is mathematically exactly the same as standard attention, rather than a sparse or low-rank approximation.
