@@ -149,28 +149,34 @@ PagedAttention 的核心思路是：**将 Attention 计算按 KV Block 粒度拆
 2. **逐块迭代**：内核遍历每个逻辑块 $j$（$j=0,1,\ldots,\lceil L_i/b\rceil-1$），通过 `block_table` **查表**获取该逻辑块对应的物理块号，然后读取该物理块内所有有效 Slot 的 K/V 数据。这一过程将离散的物理块收集到计算单元中。
 
 3. **块内注意力计算**：对于当前逻辑块 $j$，块内第 $t$ 个 Token 的全局位置为
-   $$
-   p=jb+t,
-   $$
-   其中 $t=0,1,\ldots,b-1$，最后一块只处理 $p<L_i$ 的有效 Slot。计算查询 $q_i$ 与该块内 Key 的点积，并施加因果掩码：
-   $$
-   s_{i,j,t}=\frac{q_i^\top k_{j,t}}{\sqrt d},
-   \qquad
-   \tilde s_{i,j,t}=
-   \begin{cases}
-   s_{i,j,t}, & p\le i,\\
-   -\infty, & p>i.
-   \end{cases}
-   $$
-   最终注意力输出为
-   $$
-   o_i=
-   \sum_{j,t}
-   \frac{\exp(\tilde s_{i,j,t})}
-   {\sum_{j',t'}\exp(\tilde s_{i,j',t'})}
-   v_{j,t},
-   $$
-   其中求和只对有效 Token 进行；无效 Token 满足 $\tilde s_{i,j,t}=-\infty$，其指数权重为 0。实现时按块读取 K/V，用在线 Softmax 逐块累积，结果与上式等价。
+
+$$
+p=jb+t,
+$$
+
+其中 $t=0,1,\ldots,b-1$，最后一块只处理 $p<L_i$ 的有效 Slot。计算查询 $q_i$ 与该块内 Key 的点积，并施加因果掩码：
+
+$$
+s_{i,j,t}=\frac{q_i^\top k_{j,t}}{\sqrt d},
+\qquad
+\tilde s_{i,j,t}=
+\begin{cases}
+s_{i,j,t}, & p\le i,\\
+-\infty, & p>i.
+\end{cases}
+$$
+
+最终注意力输出为
+
+$$
+o_i=
+\sum_{j,t}
+\frac{\exp(\tilde s_{i,j,t})}
+{\sum_{j',t'}\exp(\tilde s_{i,j',t'})}
+v_{j,t},
+$$
+
+其中求和只对有效 Token 进行；无效 Token 满足 $\tilde s_{i,j,t}=-\infty$，其指数权重为 0。实现时按块读取 K/V，用在线 Softmax 逐块累积，结果与上式等价。
 
 4. **跨块累积**：由于 Softmax 的指数和与加权输出不能在不同基准下直接相加，不能简单地将各块的计算结果相加。PagedAttention 借助**在线 Softmax（Online Softmax）** 技术，维护三个运行统计量——当前最大值 $m_i$、指数和 $\ell_i$ 以及加权输出 $O_i$——并在每读取一个新块后更新这三个统计量，从而将各块结果正确合并。
 
@@ -221,9 +227,7 @@ $$
 是各 Value 向量的加权和；权重 $\alpha_{i,r}$ 由该 query 对所有可见 key 的分数经 Softmax 归一化得到：
 
 $$
-\alpha_{i,r}
-=
-\frac{e^{\tilde s_{i,r}}}{\sum_{r'}e^{\tilde s_{i,r'}}}.
+\alpha_{i,r} = \frac{e^{\tilde s_{i,r}}}{\sum_{r'}e^{\tilde s_{i,r'}}}.
 $$
 
 因此，K/V 可以按任意粒度分组处理；在线 Softmax 只负责在分块读取时正确完成指数和与加权输出的合并，不改变最终归一化结果。
@@ -238,13 +242,16 @@ $$
 
 - $m_i$：截至当前块**已见分数**的最大值。在处理完所有块之前，它不是最终全局最大值，只是当前“到目前为止”的运行最大值；处理完所有块后，它就是全局最大值；
 - $\ell_i$：截至当前块、以当前 $m_i$ 为基准的**指数和**，即
-  $$
-  \ell_i=\sum_{\text{已见}}e^{s-m_i};
-  $$
+
+$$
+\ell_i=\sum_{\text{已见}}e^{s-m_i};
+$$
+
 - $O_i$：截至当前块、以当前 $m_i$ 为基准的**未归一化加权输出**，即
-  $$
-  O_i=\sum_{\text{已见}}e^{s-m_i}v.
-  $$
+
+$$
+O_i=\sum_{\text{已见}}e^{s-m_i}v.
+$$
 
 初始化为
 
@@ -319,29 +326,19 @@ $$
 此时 $m_i$ 已是最终运行最大值。该结果与在完整可见 key 集合上一次性计算 Softmax **数学上等价**；实际浮点运算中，由于舍入顺序不同，可能有微小差异，但不是算法近似。等价性的原因可以一句话说清：在整个流式过程中，$\ell_i$ 和 $O_i$ 始终以**同一个运行最大值 $m_i$** 为基准同步缩放。最后做除法时：
 
 $$
-o_i
-=
-\frac{O_i}{\ell_i}
-=
-\frac{\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}v_{j,t}}
-{\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}},
+o_i = \frac{O_i}{\ell_i} = \frac{\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}v_{j,t}} {\sum_{j,t}e^{\tilde s_{i,j,t}-m_i}},
 $$
 
 其中求和只对有效 Token 进行。因为
 
 $$
-e^{\tilde s_{i,j,t}-m_i}
-=
-e^{\tilde s_{i,j,t}}e^{-m_i},
+e^{\tilde s_{i,j,t}-m_i} = e^{\tilde s_{i,j,t}}e^{-m_i},
 $$
 
 分子分母都含有公共因子 $e^{-m_i}$，所以约掉：
 
 $$
-o_i
-=
-\frac{\sum_{j,t}e^{\tilde s_{i,j,t}}v_{j,t}}
-{\sum_{j,t}e^{\tilde s_{i,j,t}}}.
+o_i = \frac{\sum_{j,t}e^{\tilde s_{i,j,t}}v_{j,t}} {\sum_{j,t}e^{\tilde s_{i,j,t}}}.
 $$
 
 这正是标准 Softmax 加权和的定义。在线 Softmax 并没有改变 Softmax 的数学对象，它只是选择了一个**动态更新的基准**来实现这个对象；由于所有中间量始终同步使用这个基准，最终基准在归一化时自动消失。这一单遍精确归一化计算的表述可追溯到[Milakov 和 Gimelshein：《Online Normalizer Calculation for Softmax》](https://arxiv.org/abs/1805.02867)；FlashAttention 在此基础上将分块在线 Softmax 用于注意力计算，计算的是与标准注意力**数学上完全相同**的结果，而非稀疏或低秩近似。
@@ -352,7 +349,7 @@ PagedAttention 将在线 Softmax 与分块读取相结合。每个逻辑块被�
 
 1. **块内计算**是标准的 Attention（在局部范围内），数学上正确；
 2. **块间合并**使用在线 Softmax 的精确递推公式，数学上等价于全局 Softmax；
-3. **块与块之间的分界**不改变任何 Token 的 $ q $、$ k $、$ v $ 值，也不改变它们之间的相对位置关系；
+3. **块与块之间的分界**不改变任何 Token 的 $q$、$k$、$v$ 值，也不改变它们之间的相对位置关系；
 
 因此，最终输出与连续内存上一次性计算的 Attention 结果**在数学上完全等价**。数值上可能因浮点运算顺序的差异产生微小偏差（如舍入误差），但这是在可接受的精度范围内，且不改变算法的正确性。
 
